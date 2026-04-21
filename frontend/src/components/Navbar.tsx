@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Guitar, Menu, X, LogOut, User } from 'lucide-react'
+import { Guitar, Menu, X, LogOut, User, ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { ROUTES } from '@/constants'
 
@@ -49,6 +49,16 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <>
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    to={ROUTES.ADMIN}
+                    className="flex items-center gap-1.5 text-rock-400 hover:text-rock-300 text-sm transition-colors"
+                    title="Администрация"
+                  >
+                    <ShieldCheck size={18} />
+                    <span className="hidden lg:inline">Админ</span>
+                  </Link>
+                )}
                 <Link
                   to={ROUTES.PROFILE}
                   className="flex items-center gap-2 text-zinc-400 hover:text-zinc-100 text-sm transition-colors"

@@ -5,9 +5,14 @@ import { ROUTES } from '@/constants'
 
 interface Props {
   children: ReactNode
+  requiredRole?: string
 }
 
-export default function ProtectedRoute({ children }: Props) {
-  const { isAuthenticated } = useAuthStore()
-  return isAuthenticated ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />
+export default function ProtectedRoute({ children, requiredRole }: Props) {
+  const { isAuthenticated, user } = useAuthStore()
+
+  if (!isAuthenticated) return <Navigate to={ROUTES.LOGIN} replace />
+  if (requiredRole && user?.role !== requiredRole) return <Navigate to={ROUTES.HOME} replace />
+
+  return <>{children}</>
 }

@@ -15,6 +15,7 @@ import VenuesPage from '@/pages/VenuesPage'
 import VenueDetailPage from '@/pages/VenueDetailPage'
 import ProfilePage from '@/pages/ProfilePage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import AdminPage from '@/pages/AdminPage'
 
 export default function App() {
   return (
@@ -35,6 +36,10 @@ export default function App() {
           <Route
             path={ROUTES.PROFILE}
             element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
+          />
+          <Route
+            path={ROUTES.ADMIN}
+            element={<ProtectedRoute requiredRole="ADMIN"><AdminPage /></ProtectedRoute>}
           />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

@@ -5,6 +5,17 @@ import { MOCK_VENUES } from './data/venues'
 import { MOCK_EVENTS } from './data/events'
 import { MOCK_REVIEWS } from './data/reviews'
 
+// ─── mock users for admin panel ─────────────────────────────────────────────
+const MOCK_USERS = [
+  { id: 1,  email: 'admin@bgrockHub.bg',    username: 'admin',          role: 'ADMIN',  city: 'София',   isVerified: true,  isActive: true,  createdAt: '2024-01-01T00:00:00Z' },
+  { id: 2,  email: 'kontra@bgrockHub.bg',   username: 'kontra_official',role: 'BAND',   city: 'София',   isVerified: true,  isActive: true,  createdAt: '2024-01-10T10:00:00Z' },
+  { id: 3,  email: 'signal@bgrockHub.bg',   username: 'signal_bg',      role: 'BAND',   city: 'Пловдив', isVerified: true,  isActive: true,  createdAt: '2024-01-12T10:00:00Z' },
+  { id: 4,  email: 'mixtape@bgrockHub.bg',  username: 'mixtape5_venue', role: 'VENUE',  city: 'София',   isVerified: true,  isActive: true,  createdAt: '2024-01-15T10:00:00Z' },
+  { id: 99, email: 'demo@bgrockHub.bg',     username: 'demo_user',      role: 'FAN',    city: 'София',   isVerified: true,  isActive: true,  createdAt: '2024-02-01T10:00:00Z' },
+  { id: 5,  email: 'rockfan@example.com',   username: 'rockfan_varna',  role: 'FAN',    city: 'Варна',   isVerified: false, isActive: true,  createdAt: '2024-03-05T10:00:00Z' },
+  { id: 6,  email: 'banned@example.com',    username: 'spammer123',     role: 'FAN',    city: null,      isVerified: false, isActive: false, createdAt: '2024-04-01T10:00:00Z' },
+]
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const LAG_MS = 300 // simulate realistic network latency
@@ -42,15 +53,18 @@ export const handlers = [
     })
   }),
 
-  http.post('/api/auth/login', async () => {
+  http.post('/api/auth/login', async ({ request }) => {
     await delay(LAG_MS)
+    const body = await request.json() as any
+    // admin@bgrockHub.bg → влиза като ADMIN за демо на admin панела
+    const isAdmin = body.email === 'admin@bgrockHub.bg'
     return HttpResponse.json({
       accessToken: 'mock-access-token',
       refreshToken: 'mock-refresh-token',
-      userId: 99,
-      username: 'demo_user',
-      email: 'demo@bgrockHub.bg',
-      role: 'FAN',
+      userId: isAdmin ? 1 : 99,
+      username: isAdmin ? 'admin' : 'demo_user',
+      email: isAdmin ? 'admin@bgrockHub.bg' : 'demo@bgrockHub.bg',
+      role: isAdmin ? 'ADMIN' : 'FAN',
     })
   }),
 
@@ -210,6 +224,96 @@ export const handlers = [
       r => r.targetType === targetType && r.targetId === targetId,
     )
     return HttpResponse.json(paginate(filtered, page, size))
+  }),
+
+  // ── Admin ───────────────────────────────────────────────────────────────
+
+  http.get('/api/admin/stats', async () => {
+    await delay(LAG_MS)
+    return HttpResponse.json({
+      totalUsers: MOCK_USERS.length,
+      totalBands: MOCK_BANDS.length,
+      totalVenues: MOCK_VENUES.length,
+      totalEvents: MOCK_EVENTS.length,
+      totalReviews: MOCK_REVIEWS.length,
+      pendingReviews: MOCK_REVIEWS.filter(r => !r.isApproved).length,
+    })
+  }),
+
+  http.get('/api/admin/users', async () => {
+    await delay(LAG_MS)
+    return HttpResponse.json(paginate(MOCK_USERS, 0, 50))
+  }),
+
+  http.put('/api/admin/users/:id/role', async ({ params, request }) => {
+    await delay(LAG_MS)
+    const url = new URL(request.url)
+    const role = url.searchParams.get('role')
+    const user = MOCK_USERS.find(u => u.id === Number(params.id))
+    if (!user) return new HttpResponse(null, { status: 404 })
+    user.role = role ?? user.role
+    return HttpResponse.json(user)
+  }),
+
+  http.put('/api/admin/users/:id/active', async ({ params }) => {
+    await delay(LAG_MS)
+    const user = MOCK_USERS.find(u => u.id === Number(params.id))
+    if (!user) return new HttpResponse(null, { status: 404 })
+    user.isActive = !user.isActive
+    return HttpResponse.json(user)
+  }),
+
+  http.get('/api/admin/bands', async () => {
+    await delay(LAG_MS)
+    return HttpResponse.json(paginate(MOCK_BANDS, 0, 50))
+  }),
+
+  http.put('/api/admin/bands/:id/verify', async ({ params }) => {
+    await delay(LAG_MS)
+    const band = MOCK_BANDS.find(b => b.id === Number(params.id))
+    if (!band) return new HttpResponse(null, { status: 404 })
+    band.isVerified = !band.isVerified
+    return HttpResponse.json(band)
+  }),
+
+  http.delete('/api/admin/bands/:id', async ({ params }) => {
+    await delay(LAG_MS)
+    const idx = MOCK_BANDS.findIndex(b => b.id === Number(params.id))
+    if (idx !== -1) MOCK_BANDS.splice(idx, 1)
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.get('/api/admin/venues', async () => {
+    await delay(LAG_MS)
+    return HttpResponse.json(paginate(MOCK_VENUES, 0, 50))
+  }),
+
+  http.put('/api/admin/venues/:id/verify', async ({ params }) => {
+    await delay(LAG_MS)
+    const venue = MOCK_VENUES.find(v => v.id === Number(params.id))
+    if (!venue) return new HttpResponse(null, { status: 404 })
+    venue.isVerified = !venue.isVerified
+    return HttpResponse.json(venue)
+  }),
+
+  http.get('/api/admin/reviews', async () => {
+    await delay(LAG_MS)
+    return HttpResponse.json(paginate(MOCK_REVIEWS, 0, 50))
+  }),
+
+  http.put('/api/admin/reviews/:id/approve', async ({ params }) => {
+    await delay(LAG_MS)
+    const review = MOCK_REVIEWS.find(r => r.id === Number(params.id))
+    if (!review) return new HttpResponse(null, { status: 404 })
+    review.isApproved = !review.isApproved
+    return HttpResponse.json(review)
+  }),
+
+  http.delete('/api/admin/reviews/:id', async ({ params }) => {
+    await delay(LAG_MS)
+    const idx = MOCK_REVIEWS.findIndex(r => r.id === Number(params.id))
+    if (idx !== -1) MOCK_REVIEWS.splice(idx, 1)
+    return new HttpResponse(null, { status: 204 })
   }),
 
   http.post('/api/reviews', async ({ request }) => {

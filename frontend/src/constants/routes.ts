@@ -13,4 +13,6 @@ export const ROUTES = {
 
   VENUES:         '/venues',
   VENUE:          (id: number | string) => `/venues/${id}`,
+
+  ADMIN:          '/admin',
 } as const

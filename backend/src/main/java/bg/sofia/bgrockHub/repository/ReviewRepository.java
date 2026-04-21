@@ -27,4 +27,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.targetType = :type AND r.targetId = :id AND r.isApproved = true")
     Long countByTarget(@Param("type") ReviewTargetType type, @Param("id") Long id);
+
+    Page<Review> findByIsApproved(boolean isApproved, Pageable pageable);
+
+    long countByIsApproved(boolean isApproved);
 }
